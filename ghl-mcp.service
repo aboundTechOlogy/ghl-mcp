@@ -1,0 +1,16 @@
+[Unit]
+Description=GoHighLevel MCP HTTP Server
+After=network.target
+
+[Service]
+Type=simple
+User=dreww
+WorkingDirectory=/opt/ai-agent-platform/mcp-servers/ghl-mcp
+ExecStart=/opt/ai-agent-platform/mcp-servers/ghl-mcp/load-secrets.sh
+Restart=always
+RestartSec=10
+MemoryLimit=512M
+CPUQuota=50%
+
+[Install]
+WantedBy=multi-user.target
