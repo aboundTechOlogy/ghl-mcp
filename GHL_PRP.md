@@ -18,11 +18,22 @@
 - **Service**: systemd service `ghl-mcp.service` (active and running)
 - **Authentication**: ✅ Dual OAuth working (Bearer token + GitHub OAuth)
 - **GHL API**: ✅ OAuth 2.0 with automatic token refresh (24h cycle)
-- **Tools Implemented**: ✅ 6 contact management tools
+- **Tools Implemented**: ✅ 44 total tools
+  - 6 Contact management tools
+  - 5 Opportunity management tools
+  - 4 Conversation/messaging tools
+  - 6 Calendar/appointment tools
+  - 2 Workflow tools (read-only)
+  - 2 Form tools (read-only)
+  - 5 Custom Objects tools
+  - 3 Media management tools
+  - 5 Location management tools
+  - 3 User management tools
+  - 3 Tag management tools
 - **Claude Code**: ✅ Connected and working
 - **Claude Desktop**: ✅ Connected and working
 
-**Next Phase**: Add additional tools (conversations, opportunities, calendars, workflows, forms, custom objects)
+**Next Phase**: Test and deploy updated tools to GCP VM
 
 ## Related Documents
 - **[README.md](./README.md)** - Quick reference and current implementation status
@@ -259,52 +270,95 @@ GoHighLevel API v2 provides comprehensive CRM capabilities through OAuth 2.0. Ba
 - **Session Management**: 30-minute timeout with automatic cleanup
 - **Health Check**: `/health` endpoint
 
-#### MCP Tools (Priority 1 - Core)
+#### MCP Tools - Contacts (6 tools)
 ```
-ghl_create_contact         - Create new contact with custom fields
-ghl_update_contact         - Update contact fields and tags
-ghl_delete_contact         - Delete contact by ID
-ghl_search_contacts        - Search contacts by name/email/tag/custom field
-ghl_get_contact            - Get complete contact details
+ghl_create_contact         - Create new contact with custom fields and tags
+ghl_update_contact         - Update contact fields, tags, and custom fields
+ghl_search_contacts        - Search contacts by location and optional query
+ghl_get_contact            - Get complete contact details by ID
 ghl_add_tag                - Add tag to contact
 ghl_remove_tag             - Remove tag from contact
 ```
 
-#### MCP Tools (Priority 2 - Conversations)
+#### MCP Tools - Opportunities (5 tools)
 ```
-ghl_send_message           - Send SMS/Email/WhatsApp message
-ghl_get_conversation       - Get conversation thread
-ghl_list_conversations     - List all conversations for location
-ghl_get_messages           - Get messages in conversation
-```
-
-#### MCP Tools (Priority 3 - Opportunities)
-```
-ghl_create_opportunity     - Create deal in pipeline
-ghl_update_opportunity     - Update deal stage/value/status
-ghl_delete_opportunity     - Delete opportunity
-ghl_list_opportunities     - List all opportunities
-ghl_get_opportunity        - Get opportunity details
+ghl_get_opportunity        - Get opportunity details by ID
+ghl_list_opportunities     - List opportunities for a location (optional pipeline filter)
+ghl_create_opportunity     - Create new opportunity in pipeline
+ghl_update_opportunity     - Update opportunity stage, value, status, etc.
+ghl_delete_opportunity     - Delete opportunity by ID
 ```
 
-#### MCP Tools (Priority 4 - Calendar)
+#### MCP Tools - Conversations (4 tools)
 ```
-ghl_create_appointment     - Schedule calendar event
+ghl_get_conversation       - Get conversation thread by ID
+ghl_list_conversations     - List all conversations for a location
+ghl_send_message           - Send message (SMS/Email/WhatsApp/GMB/IG/FB)
+ghl_get_messages           - Get all messages in a conversation
+```
+
+#### MCP Tools - Calendars (6 tools)
+```
+ghl_list_calendars         - List all calendars for a location
+ghl_get_calendar           - Get calendar details by ID
+ghl_list_appointments      - List appointments with optional date range
+ghl_create_appointment     - Schedule new calendar appointment
 ghl_update_appointment     - Update appointment details
-ghl_delete_appointment     - Cancel appointment
-ghl_list_appointments      - List upcoming appointments
-ghl_get_appointment        - Get appointment details
+ghl_delete_appointment     - Delete/cancel appointment
 ```
 
-#### MCP Tools (Priority 5 - Additional)
+#### MCP Tools - Workflows (2 tools - Read-Only)
 ```
-ghl_create_workflow        - Create automation workflow
-ghl_trigger_workflow       - Manually trigger workflow
-ghl_list_workflows         - List all workflows
-ghl_register_webhook       - Register webhook for events
-ghl_list_webhooks          - List registered webhooks
-ghl_delete_webhook         - Remove webhook registration
+ghl_list_workflows         - List all workflows for a location
+ghl_get_workflow           - Get workflow details by ID
 ```
+
+#### MCP Tools - Forms (2 tools - Read-Only)
+```
+ghl_list_forms             - List all forms for a location
+ghl_get_form               - Get form details by ID
+```
+
+#### MCP Tools - Custom Objects (5 tools)
+```
+ghl_list_custom_objects    - List custom objects for a location with optional type filter
+ghl_get_custom_object      - Get custom object details by ID
+ghl_create_custom_object   - Create new custom object
+ghl_update_custom_object   - Update custom object data
+ghl_delete_custom_object   - Delete custom object
+```
+
+#### MCP Tools - Media (3 tools)
+```
+ghl_list_media             - List media files for a location
+ghl_upload_media           - Upload media file (max 25MB, base64 encoded)
+ghl_delete_media           - Delete media file
+```
+
+#### MCP Tools - Locations (5 tools)
+```
+ghl_get_location           - Get location details including settings
+ghl_update_location        - Update location information (name, address, phone, etc.)
+ghl_list_location_custom_fields    - List all custom fields defined for location
+ghl_get_location_custom_values     - Get custom field values for location
+ghl_update_location_custom_values  - Update custom field values for location
+```
+
+#### MCP Tools - Users (3 tools)
+```
+ghl_list_users             - List all users for a location
+ghl_get_user               - Get user details by ID
+ghl_update_user            - Update user information
+```
+
+#### MCP Tools - Tags (3 tools)
+```
+ghl_list_tags              - List all tags for a location
+ghl_create_tag             - Create new tag with optional color
+ghl_delete_tag             - Delete tag
+```
+
+**Total Tools: 44** (6 contacts + 5 opportunities + 4 conversations + 6 calendars + 2 workflows + 2 forms + 5 custom objects + 3 media + 5 locations + 3 users + 3 tags)
 
 ### 4.3 Data Flow
 
