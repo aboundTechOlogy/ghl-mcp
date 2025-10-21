@@ -331,9 +331,107 @@ ghl_delete_webhook         - Remove webhook registration
 10. Complete - client record exists in all systems
 ```
 
-### 4.4 Dual OAuth Architecture
+### 4.4 Dual OAuth Architecture (ACTUAL IMPLEMENTATION)
 
-#### MCP Client Authentication (GitHub OAuth 2.1)
+**Note**: This section documents the actual working implementation deployed on GCP VM.
+
+#### How the Dual OAuth Actually Works
+
+The server implements **two independent OAuth flows**:
+
+1. **MCP Client Authentication** - Authenticates the MCP client (Claude Code or Claude Desktop)
+2. **GHL API Authentication** - Authenticates with GoHighLevel API
+
+##### Key Implementation Details
+
+**Bearer Token Authentication (Claude Code - GLOBAL ACCESS)**
+
+The solution that finally made Claude Code work globally was implementing bearer token authentication that creates a persistent session:
+
+```typescript
+// From http-server-json-rpc.ts lines 174-198
+if (authHeader.startsWith('Bearer ')) {
+  const token = authHeader.substring(7);
+
+  if (token === config.authToken) {
+    // Create/get anonymous session - THIS IS THE KEY!
+    let session = Array.from(this.sessions.values()).find(s => s.accessToken === token);
+    if (!session) {
+      session = {
+        id: this.generateSessionId(),
+        accessToken: token,
+        lastActivity: Date.now(),
+      };
+      this.sessions.set(session.id, session);
+    } else {
+      session.lastActivity = Date.now(); // Keep session alive
+    }
+
+    (req as any).session = session;
+    next();
+    return;
+  }
+}
+```
+
+**Critical Insight**: The bearer token auth creates a **reusable session** that persists across chat threads. The session is kept alive as long as requests come in within the 30-minute timeout window. This eliminates the need to re-authenticate for every new chat in Claude Code.
+
+**Session Management**
+
+```typescript
+// Session cleanup every minute
+private startSessionCleanup(): void {
+  setInterval(() => {
+    const now = Date.now();
+    const expired: string[] = [];
+
+    for (const [id, session] of this.sessions.entries()) {
+      if (now - session.lastActivity > config.sessionTimeout) {
+        expired.push(id);
+      }
+    }
+
+    for (const id of expired) {
+      this.sessions.delete(id);
+    }
+  }, 60000);
+}
+```
+
+**GHL OAuth Token Injection**
+
+Each session can store GHL OAuth tokens. When a request comes in:
+
+```typescript
+// From http-server-json-rpc.ts lines 138-142
+// Inject GHL tokens into MCP server if available
+if (session.ghlTokens) {
+  this.mcpServer.setOAuthTokens(session.ghlTokens);
+}
+```
+
+**Automatic Token Refresh**
+
+The GHL OAuth manager automatically refreshes tokens before expiry:
+
+```typescript
+// From ghl/oauth-manager.ts lines 132-144
+async getAccessToken(): Promise<string> {
+  if (!this.tokens) {
+    throw new Error('No tokens available. Please authenticate first.');
+  }
+
+  // Refresh if token expires in less than 5 minutes
+  const fiveMinutes = 5 * 60 * 1000;
+  if (Date.now() >= this.tokens.expiresAt - fiveMinutes) {
+    await this.refreshAccessToken();
+  }
+
+  return this.tokens!.accessToken;
+}
+```
+
+#### MCP Client Authentication (Claude Desktop - GitHub OAuth)
 ```
 Claude Desktop              ghl-mcp Server           GitHub
      │                            │                      │
