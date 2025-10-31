@@ -79,40 +79,122 @@ node dist/index.js
 The server uses these GHL OAuth scopes (configured in GHL Marketplace app):
 
 **Core CRM:**
-- `contacts.readonly` - Read contacts
-- `contacts.write` - Create/update/delete contacts
-- `conversations.readonly` - Read conversations
-- `conversations.write` / `conversations/message.write` - Send messages
-- `opportunities.readonly` - Read opportunities
-- `opportunities.write` - Manage opportunities
+- `businesses.readonly` / `businesses.write` - Business data management
+- `companies.readonly` - Company information
+- `contacts.readonly` / `contacts.write` - Contacts management
+- `conversations.readonly` / `conversations.write` - Conversations
+- `conversations/message.readonly` / `conversations/message.write` - Direct messaging
+- `conversations/reports.readonly` - Conversation analytics
+- `conversations/livechat.write` - Live chat management
+- `opportunities.readonly` / `opportunities.write` - Sales pipeline
+
+**AI & Automation:**
+- `conversation-ai.readonly` / `conversation-ai.write` - Conversation AI
+- `knowledge-bases.readonly` / `knowledge-bases.write` - Knowledge bases
+- `voice-ai-agent-goals.readonly` / `voice-ai-agent-goals.write` - Voice AI goals
+- `voice-ai-agents.readonly` / `voice-ai-agents.write` - Voice AI agents
+- `voice-ai-dashboard.readonly` - Voice AI dashboard
+- `agent-studio.readonly` / `agent-studio.write` - Agent studio
 
 **Calendar & Events:**
-- `calendars.readonly` - Read calendars
-- `calendars.write` - Manage calendars
-- `calendars/events.readonly` - Read calendar events
-- `calendars/events.write` - Manage appointments
+- `calendars.readonly` / `calendars.write` - Calendar management
+- `calendars/events.readonly` / `calendars/events.write` - Event management
 - `calendars/groups.readonly` / `calendars/groups.write` - Calendar groups
 - `calendars/resources.readonly` / `calendars/resources.write` - Calendar resources
 
 **Location Management:**
-- `locations.readonly` - Read locations
+- `locations.readonly` - Location information
 - `locations/customFields.readonly` / `locations/customFields.write` - Custom fields
 - `locations/customValues.readonly` / `locations/customValues.write` - Custom values
 - `locations/tags.readonly` / `locations/tags.write` - Tags
 - `locations/tasks.readonly` / `locations/tasks.write` - Tasks
+- `locations/templates.readonly` - Location templates
+- `recurring-tasks.readonly` / `recurring-tasks.write` - Recurring tasks
 
 **Content & Media:**
-- `workflows.readonly` - Read workflows
+- `workflows.readonly` - Workflows
 - `forms.readonly` / `forms.write` - Forms
 - `medias.readonly` / `medias.write` - Media files
+- `links.readonly` / `links.write` - Link management
 
-**Custom Objects:**
+**Custom Objects & Associations:**
 - `objects/schema.readonly` / `objects/schema.write` - Object schemas
 - `objects/record.readonly` / `objects/record.write` - Object records
+- `associations.readonly` / `associations.write` - Associations
+- `associations/relation.readonly` / `associations/relation.write` - Association relations
 
-**Users & Auth:**
-- `users.readonly` - Read users
+**Documents & Contracts:**
+- `documents_contracts_template/list.readonly` - Contract templates list
+- `documents_contracts_template/sendLink.write` - Send template links
+- `documents_contracts/list.readonly` - Contracts list
+- `documents_contracts/sendLink.write` - Send contract links
+
+**Communications:**
+- `twilioaccount.read` - Twilio account access
+- `numberpools.read` - Number pools
+- `phonenumbers.read` - Phone numbers
+- `lc-email.readonly` - LC email access
+
+**Marketing & Content:**
+- `campaigns.readonly` - Marketing campaigns
+- `blogs/list.readonly` - Blog posts list
+- `blogs/posts.readonly` - Blog posts
+- `blogs/author.readonly` - Blog authors
+- `blogs/category.readonly` - Blog categories
+- `blogs/post-update.write` / `blogs/post.write` - Blog post management
+- `blogs/check-slug.readonly` - Check blog slugs
+- `custom-menu-link.readonly` / `custom-menu-link.write` - Custom menu links
+- `emails/schedule.readonly` - Email scheduling
+- `emails/builder.readonly` / `emails/builder.write` - Email builder
+
+**Social Media:**
+- `socialplanner/tag.readonly` / `socialplanner/tag.write` - Social tags
+- `socialplanner/category.readonly` / `socialplanner/category.write` - Social categories
+- `socialplanner/statistics.readonly` - Social statistics
+- `socialplanner/csv.readonly` / `socialplanner/csv.write` - Social CSV
+- `socialplanner/account.readonly` / `socialplanner/account.write` - Social accounts
+- `socialplanner/post.readonly` / `socialplanner/post.write` - Social posts
+- `socialplanner/oauth.readonly` / `socialplanner/oauth.write` - Social OAuth
+- `wordpress.site.readonly` - WordPress sites
+
+**Funnels & Websites:**
+- `funnels/redirect.readonly` / `funnels/redirect.write` - Funnel redirects
+- `funnels/pagecount.readonly` - Page view counts
+- `funnels/funnel.readonly` - Funnel data
+- `funnels/page.readonly` - Funnel pages
+
+**E-commerce & Products:**
+- `store/setting.readonly` / `store/setting.write` - Store settings
+- `store/shipping.readonly` / `store/shipping.write` - Shipping settings
+- `products.readonly` / `products.write` - Products
+- `products/prices.readonly` / `products/prices.write` - Product pricing
+- `products/collection.readonly` / `products/collection.write` - Product collections
+
+**Payments & Billing:**
+- `invoices.readonly` / `invoices.write` - Invoices
+- `invoices/estimate.readonly` / `invoices/estimate.write` - Estimates
+- `invoices/template.readonly` / `invoices/template.write` - Invoice templates
+- `invoices/schedule.readonly` / `invoices/schedule.write` - Invoice scheduling
+- `payments/orders.readonly` / `payments/orders.write` - Orders
+- `payments/orders.collectPayment` - Collect payments
+- `payments/integration.readonly` / `payments/integration.write` - Payment integrations
+- `payments/transactions.readonly` - Transaction history
+- `payments/subscriptions.readonly` - Subscriptions
+- `payments/coupons.readonly` / `payments/coupons.write` - Coupons
+- `payments/custom-provider.readonly` / `payments/custom-provider.write` - Custom payment providers
+- `charges.readonly` / `charges.write` - Charge management
+
+**SaaS & Enterprise:**
+- `saas/company.read` / `saas/company.write` - SaaS company management
+- `saas/location.read` / `saas/location.write` - SaaS location management
+- `snapshots.readonly` / `snapshots.write` - Snapshots
+- `courses.readonly` / `courses.write` - Courses
+
+**System & Admin:**
+- `users.readonly` - User information
 - `oauth.readonly` / `oauth.write` - OAuth management
+- `surveys.readonly` - Surveys
+- `marketplace-installer-details.readonly` - Marketplace installer details
 
 ## Configuration
 
