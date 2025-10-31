@@ -76,15 +76,43 @@ node dist/index.js
 
 ## OAuth Scopes
 
-The server uses these GHL OAuth scopes:
+The server uses these GHL OAuth scopes (configured in GHL Marketplace app):
+
+**Core CRM:**
 - `contacts.readonly` - Read contacts
 - `contacts.write` - Create/update/delete contacts
 - `conversations.readonly` - Read conversations
-- `conversations.write` - Send messages
+- `conversations.write` / `conversations/message.write` - Send messages
 - `opportunities.readonly` - Read opportunities
 - `opportunities.write` - Manage opportunities
+
+**Calendar & Events:**
 - `calendars.readonly` - Read calendars
-- `calendars.write` - Manage calendar events
+- `calendars.write` - Manage calendars
+- `calendars/events.readonly` - Read calendar events
+- `calendars/events.write` - Manage appointments
+- `calendars/groups.readonly` / `calendars/groups.write` - Calendar groups
+- `calendars/resources.readonly` / `calendars/resources.write` - Calendar resources
+
+**Location Management:**
+- `locations.readonly` - Read locations
+- `locations/customFields.readonly` / `locations/customFields.write` - Custom fields
+- `locations/customValues.readonly` / `locations/customValues.write` - Custom values
+- `locations/tags.readonly` / `locations/tags.write` - Tags
+- `locations/tasks.readonly` / `locations/tasks.write` - Tasks
+
+**Content & Media:**
+- `workflows.readonly` - Read workflows
+- `forms.readonly` / `forms.write` - Forms
+- `medias.readonly` / `medias.write` - Media files
+
+**Custom Objects:**
+- `objects/schema.readonly` / `objects/schema.write` - Object schemas
+- `objects/record.readonly` / `objects/record.write` - Object records
+
+**Users & Auth:**
+- `users.readonly` - Read users
+- `oauth.readonly` / `oauth.write` - OAuth management
 
 ## Configuration
 

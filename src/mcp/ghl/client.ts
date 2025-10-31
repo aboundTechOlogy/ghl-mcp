@@ -856,11 +856,9 @@ export class GHLClient {
   async listTags(locationId: string): Promise<GHLTag[]> {
     logger.debug('Listing tags', { locationId });
 
-    const params = new URLSearchParams({ locationId });
-
     const result = await this.request<{ tags: GHLTag[] }>(
       'GET',
-      `/tags/?${params.toString()}`
+      `/locations/${locationId}/tags`
     );
 
     return result.tags;
@@ -874,9 +872,8 @@ export class GHLClient {
 
     const result = await this.request<{ tag: GHLTag }>(
       'POST',
-      '/tags/',
+      `/locations/${locationId}/tags`,
       {
-        locationId,
         name,
         color,
       }
