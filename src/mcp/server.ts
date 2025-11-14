@@ -101,30 +101,6 @@ export class GHLMCPServer {
       const { name, arguments: args } = request.params;
 
       try {
-        // Check if authenticated
-        if (!this.oauthManager.hasTokens()) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: JSON.stringify({
-                  error: 'Not authenticated. Please provide GHL OAuth tokens.',
-                  authUrl: GHLOAuthManager.getAuthorizationUrl([
-                    'contacts.readonly',
-                    'contacts.write',
-                    'conversations.readonly',
-                    'conversations.write',
-                    'opportunities.readonly',
-                    'opportunities.write',
-                    'calendars.readonly',
-                    'calendars.write',
-                  ]),
-                }, null, 2),
-              },
-            ],
-          };
-        }
-
         // Route to appropriate tool handler
         let result;
         if (name.startsWith('ghl_create_contact') || name.startsWith('ghl_update_contact') ||

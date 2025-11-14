@@ -27,7 +27,10 @@ const CreateOpportunitySchema = z.object({
   assignedTo: z.string().optional().describe('Assigned user ID'),
   notes: z.string().optional().describe('Opportunity notes'),
   source: z.string().optional().describe('Lead source'),
-  customFields: z.record(z.unknown()).optional().describe('Custom field values'),
+  customFields: z.array(z.object({
+    id: z.string().describe('Custom field ID'),
+    value: z.unknown().describe('Custom field value'),
+  })).optional().describe('Custom field values'),
 });
 
 const UpdateOpportunitySchema = z.object({
@@ -38,7 +41,10 @@ const UpdateOpportunitySchema = z.object({
   monetaryValue: z.number().optional().describe('Updated deal value'),
   assignedTo: z.string().optional().describe('Updated assigned user'),
   notes: z.string().optional().describe('Updated notes'),
-  customFields: z.record(z.unknown()).optional().describe('Updated custom fields'),
+  customFields: z.array(z.object({
+    id: z.string().describe('Custom field ID'),
+    value: z.unknown().describe('Custom field value'),
+  })).optional().describe('Updated custom fields'),
 });
 
 const DeleteOpportunitySchema = z.object({

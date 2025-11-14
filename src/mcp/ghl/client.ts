@@ -17,7 +17,7 @@ export interface GHLContact {
   email?: string;
   phone?: string;
   tags?: string[];
-  customFields?: Record<string, unknown>;
+  customFields?: Array<{ id: string; value?: unknown }>;
   dateAdded?: string;
   dateUpdated?: string;
   [key: string]: unknown;
@@ -41,7 +41,7 @@ export interface GHLOpportunity {
   assignedTo?: string;
   notes?: string;
   source?: string;
-  customFields?: Record<string, unknown>;
+  customFields?: Array<{ id: string; value?: unknown }>;
   [key: string]: unknown;
 }
 

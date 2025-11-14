@@ -7,8 +7,8 @@ import fetch from 'node-fetch';
 import { logger } from '../../utils/logger.js';
 import { config } from '../../utils/config.js';
 
-const GHL_OAUTH_BASE = 'https://services.leadconnectorhq.com';
-const TOKEN_ENDPOINT = `${GHL_OAUTH_BASE}/oauth/token`;
+const GHL_OAUTH_AUTHORIZE = 'https://marketplace.gohighlevel.com/oauth/chooselocation';
+const GHL_OAUTH_TOKEN = 'https://services.leadconnectorhq.com/oauth/token';
 
 export interface GHLTokens {
   accessToken: string;
@@ -46,7 +46,7 @@ export class GHLOAuthManager {
       params.append('redirect_uri', config.ghlRedirectUri);
     }
 
-    const response = await fetch(TOKEN_ENDPOINT, {
+    const response = await fetch(GHL_OAUTH_TOKEN, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -96,7 +96,7 @@ export class GHLOAuthManager {
           refresh_token: this.tokens!.refreshToken,
         });
 
-        const response = await fetch(TOKEN_ENDPOINT, {
+        const response = await fetch(GHL_OAUTH_TOKEN, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -199,6 +199,6 @@ export class GHLOAuthManager {
       params.append('redirect_uri', config.ghlRedirectUri);
     }
 
-    return `${GHL_OAUTH_BASE}/oauth/authorize?${params.toString()}`;
+    return `${GHL_OAUTH_AUTHORIZE}?${params.toString()}`;
   }
 }

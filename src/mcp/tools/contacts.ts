@@ -14,7 +14,10 @@ const CreateContactSchema = z.object({
   email: z.string().email().optional().describe('Contact email address'),
   phone: z.string().optional().describe('Contact phone number'),
   tags: z.array(z.string()).optional().describe('Tags to apply to contact'),
-  customFields: z.record(z.unknown()).optional().describe('Custom field values'),
+  customFields: z.array(z.object({
+    id: z.string().describe('Custom field ID'),
+    value: z.unknown().describe('Custom field value'),
+  })).optional().describe('Custom field values'),
 });
 
 const UpdateContactSchema = z.object({
@@ -24,7 +27,10 @@ const UpdateContactSchema = z.object({
   email: z.string().email().optional().describe('Updated email address'),
   phone: z.string().optional().describe('Updated phone number'),
   tags: z.array(z.string()).optional().describe('Updated tags'),
-  customFields: z.record(z.unknown()).optional().describe('Updated custom fields'),
+  customFields: z.array(z.object({
+    id: z.string().describe('Custom field ID'),
+    value: z.unknown().describe('Custom field value'),
+  })).optional().describe('Updated custom fields'),
 });
 
 const SearchContactsSchema = z.object({

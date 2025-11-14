@@ -1,15 +1,17 @@
 /**
  * HTTP JSON-RPC Server for MCP with Dual OAuth
  * Supports both Bearer token (Claude Code) and GitHub OAuth (Claude Desktop)
+ * Uses MCP SDK's built-in OAuth router for standards-compliant OAuth 2.1
  */
 
 import express from 'express';
 import type { Request, Response, NextFunction } from 'express';
-import fetch from 'node-fetch';
 import { logger } from '../utils/logger.js';
 import { config } from '../utils/config.js';
 import { GHLMCPServer } from './server.js';
 import type { JSONRPCRequest } from '@modelcontextprotocol/sdk/types.js';
+import { setupOAuthRoutes, createOAuthAuthenticationMiddleware } from './oauth/oauth-integration.js';
+import type { GitHubOAuthProvider } from './oauth/github-oauth-provider.js';
 
 interface Session {
   id: string;
@@ -23,21 +25,17 @@ interface Session {
   };
 }
 
-interface GitHubUser {
-  login: string;
-  id: number;
-  email?: string;
-}
-
 export class HTTPServer {
   private app: express.Application;
   private sessions: Map<string, Session> = new Map();
   private mcpServer: GHLMCPServer;
+  private oauthProvider: GitHubOAuthProvider | null = null;
 
   constructor() {
     this.app = express();
     this.mcpServer = new GHLMCPServer();
     this.setupMiddleware();
+    this.setupOAuth();
     this.setupRoutes();
     this.startSessionCleanup();
   }
@@ -45,12 +43,16 @@ export class HTTPServer {
   private setupMiddleware(): void {
     this.app.use(express.json());
 
-    // CORS
+    // CORS - expose OAuth headers
     this.app.use((req, res, next) => {
       res.header('Access-Control-Allow-Origin', '*');
       res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
       res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      res.header('Access-Control-Expose-Headers', 'X-OAuth-Authorization-Server');
+
       if (req.method === 'OPTIONS') {
+        // Add OAuth discovery header for OPTIONS requests
+        res.header('X-OAuth-Authorization-Server', `${config.baseUrl}/.well-known/oauth-authorization-server`);
         res.sendStatus(200);
       } else {
         next();
@@ -64,6 +66,27 @@ export class HTTPServer {
     });
   }
 
+  /**
+   * Setup OAuth using MCP SDK's built-in router
+   */
+  private setupOAuth(): void {
+    const enableOAuth = !!(config.githubClientId && config.githubClientSecret);
+
+    if (enableOAuth) {
+      logger.info('Setting up OAuth with MCP SDK router');
+      this.oauthProvider = setupOAuthRoutes(this.app, {
+        enableOAuth: true,
+        useGitHub: true,
+        baseUrl: config.baseUrl,
+        githubClientId: config.githubClientId,
+        githubClientSecret: config.githubClientSecret,
+      });
+    } else {
+      logger.warn('OAuth disabled - GitHub credentials not configured');
+      logger.warn('Only bearer token authentication will be available');
+    }
+  }
+
   private setupRoutes(): void {
     // Health check
     this.app.get('/health', (req, res) => {
@@ -72,33 +95,11 @@ export class HTTPServer {
         server: 'ghl-mcp-server',
         version: '1.0.0',
         timestamp: new Date().toISOString(),
+        oauth: this.oauthProvider ? 'enabled' : 'disabled',
       });
     });
 
-    // GitHub OAuth callback
-    this.app.get('/auth/callback', async (req, res) => {
-      const { code } = req.query;
-
-      if (!code || typeof code !== 'string') {
-        return res.status(400).json({ error: 'Missing authorization code' });
-      }
-
-      try {
-        const session = await this.handleGitHubCallback(code);
-        res.json({
-          success: true,
-          sessionId: session.id,
-          message: 'Authentication successful',
-        });
-      } catch (error) {
-        logger.error('OAuth callback error:', error);
-        res.status(500).json({
-          error: error instanceof Error ? error.message : 'Authentication failed',
-        });
-      }
-    });
-
-    // GHL OAuth callback
+    // GHL OAuth callback (for GoHighLevel API authentication)
     this.app.get('/ghl/callback', async (req, res) => {
       const { code, state } = req.query;
 
@@ -131,14 +132,40 @@ export class HTTPServer {
       }
     });
 
-    // MCP JSON-RPC endpoint
-    this.app.post('/mcp', this.authenticate.bind(this), async (req, res) => {
-      try {
-        const session = (req as any).session as Session;
+    // MCP JSON-RPC endpoint with dual authentication
+    const authMiddleware = createOAuthAuthenticationMiddleware({
+      provider: this.oauthProvider,
+      bearerToken: config.authToken
+    });
 
-        // Inject GHL tokens into MCP server if available
-        if (session.ghlTokens) {
-          this.mcpServer.setOAuthTokens(session.ghlTokens);
+    this.app.post('/mcp', authMiddleware, async (req, res) => {
+      try {
+        // Check if request has OAuth token info (Claude Desktop)
+        const oauthTokenInfo = (req as any).oauthTokenInfo;
+
+        // For bearer token users (Claude Code), maintain session for GHL tokens
+        if (!oauthTokenInfo) {
+          const authHeader = req.headers.authorization;
+          if (authHeader && authHeader.startsWith('Bearer ')) {
+            const token = authHeader.substring(7);
+            // Create/get session for bearer token
+            let session = Array.from(this.sessions.values()).find(s => s.accessToken === token);
+            if (!session) {
+              session = {
+                id: this.generateSessionId(),
+                accessToken: token,
+                lastActivity: Date.now(),
+              };
+              this.sessions.set(session.id, session);
+            } else {
+              session.lastActivity = Date.now();
+            }
+
+            // Inject GHL tokens if available
+            if (session.ghlTokens) {
+              this.mcpServer.setOAuthTokens(session.ghlTokens);
+            }
+          }
         }
 
         // Handle JSON-RPC request
@@ -158,115 +185,6 @@ export class HTTPServer {
         });
       }
     });
-  }
-
-  /**
-   * Authentication middleware - supports both bearer token and session
-   */
-  private async authenticate(req: Request, res: Response, next: NextFunction): Promise<void> {
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader) {
-      res.status(401).json({ error: 'Missing Authorization header' });
-      return;
-    }
-
-    // Bearer token auth (Claude Code)
-    if (authHeader.startsWith('Bearer ')) {
-      const token = authHeader.substring(7);
-
-      if (token === config.authToken) {
-        // Create/get anonymous session
-        let session = Array.from(this.sessions.values()).find(s => s.accessToken === token);
-        if (!session) {
-          session = {
-            id: this.generateSessionId(),
-            accessToken: token,
-            lastActivity: Date.now(),
-          };
-          this.sessions.set(session.id, session);
-        } else {
-          session.lastActivity = Date.now();
-        }
-
-        (req as any).session = session;
-        next();
-        return;
-      } else {
-        res.status(401).json({ error: 'Invalid bearer token' });
-        return;
-      }
-    }
-
-    // Session-based auth (Claude Desktop with GitHub OAuth)
-    const sessionId = authHeader.replace('Bearer ', '');
-    const session = this.sessions.get(sessionId);
-
-    if (!session) {
-      res.status(401).json({ error: 'Invalid session' });
-      return;
-    }
-
-    // Update last activity
-    session.lastActivity = Date.now();
-    this.sessions.set(sessionId, session);
-
-    (req as any).session = session;
-    next();
-  }
-
-  /**
-   * Handle GitHub OAuth callback
-   */
-  private async handleGitHubCallback(code: string): Promise<Session> {
-    if (!config.githubClientId || !config.githubClientSecret) {
-      throw new Error('GitHub OAuth not configured');
-    }
-
-    // Exchange code for access token
-    const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify({
-        client_id: config.githubClientId,
-        client_secret: config.githubClientSecret,
-        code,
-      }),
-    });
-
-    const tokenData = (await tokenResponse.json()) as any;
-
-    if (tokenData.error) {
-      throw new Error(`GitHub OAuth error: ${tokenData.error_description || tokenData.error}`);
-    }
-
-    const accessToken = tokenData.access_token;
-
-    // Get user info
-    const userResponse = await fetch('https://api.github.com/user', {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Accept': 'application/json',
-      },
-    });
-
-    const user = (await userResponse.json()) as GitHubUser;
-
-    // Create session
-    const session: Session = {
-      id: this.generateSessionId(),
-      accessToken,
-      lastActivity: Date.now(),
-    };
-
-    this.sessions.set(session.id, session);
-
-    logger.info('GitHub OAuth successful', { user: user.login });
-
-    return session;
   }
 
   /**
@@ -291,7 +209,9 @@ export class HTTPServer {
         return;
       }
 
-      handler(request.params)
+      // Pass the full request object
+      // The MCP SDK handlers expect the complete JSON-RPC request for validation
+      handler(request)
         .then((result: any) => {
           resolve({
             jsonrpc: '2.0',
@@ -355,8 +275,13 @@ export class HTTPServer {
         logger.info(`Health check: ${config.baseUrl}/health`);
         logger.info(`MCP endpoint: ${config.baseUrl}/mcp`);
 
-        if (config.githubClientId) {
-          logger.info(`GitHub OAuth: ${config.baseUrl}/auth/callback`);
+        if (this.oauthProvider) {
+          logger.info('OAuth 2.1 endpoints:');
+          logger.info(`  Metadata: ${config.baseUrl}/mcp/.well-known/oauth-authorization-server`);
+          logger.info(`  Register: ${config.baseUrl}/mcp/oauth/register`);
+          logger.info(`  Authorize: ${config.baseUrl}/mcp/oauth/authorize`);
+          logger.info(`  Token: ${config.baseUrl}/mcp/oauth/token`);
+          logger.info(`  Callback: ${config.baseUrl}/oauth/callback`);
         }
 
         logger.info(`GHL OAuth: ${config.baseUrl}/ghl/callback`);
