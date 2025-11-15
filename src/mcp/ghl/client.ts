@@ -330,7 +330,7 @@ export class GHLClient {
   async listOpportunities(locationId: string, pipelineId?: string): Promise<GHLOpportunity[]> {
     logger.debug('Listing opportunities', { locationId, pipelineId });
 
-    const params = new URLSearchParams({ locationId });
+    const params = new URLSearchParams({ location_id: locationId });
     if (pipelineId) {
       params.append('pipelineId', pipelineId);
     }

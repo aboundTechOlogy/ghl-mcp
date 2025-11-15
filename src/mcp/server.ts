@@ -99,6 +99,7 @@ export class GHLMCPServer {
     // Execute tool
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
+      logger.info(`Tool execution requested: ${name}, type: ${typeof name}, constructor: ${name?.constructor?.name}`);
 
       try {
         // Route to appropriate tool handler
@@ -107,7 +108,10 @@ export class GHLMCPServer {
             name.startsWith('ghl_search_contacts') || name.startsWith('ghl_get_contact') ||
             name.startsWith('ghl_add_tag') || name.startsWith('ghl_remove_tag')) {
           result = await this.contactTools.executeTool(name, args || {});
-        } else if (name.includes('opportunity')) {
+        } else if (name.startsWith('ghl_get_opportunity') || name.startsWith('ghl_list_opportunit') ||
+                   name.startsWith('ghl_create_opportunity') || name.startsWith('ghl_update_opportunity') ||
+                   name.startsWith('ghl_delete_opportunity')) {
+          logger.info(`Routing to opportunity tools: ${name}`);
           result = await this.opportunityTools.executeTool(name, args || {});
         } else if (name.includes('conversation') || name.includes('message')) {
           result = await this.conversationTools.executeTool(name, args || {});
@@ -128,6 +132,7 @@ export class GHLMCPServer {
         } else if (name === 'ghl_list_tags' || name === 'ghl_create_tag' || name === 'ghl_delete_tag') {
           result = await this.tagTools.executeTool(name, args || {});
         } else {
+          logger.error(`No routing matched for tool: ${name}, includes('opportunity')=${name.includes('opportunity')}`);
           throw new Error(`Unknown tool: ${name}`);
         }
 
