@@ -404,16 +404,20 @@ export class GHLClient {
   /**
    * List conversations
    */
-  async listConversations(locationId: string): Promise<GHLConversation[]> {
-    logger.debug('Listing conversations', { locationId });
+  async listConversations(locationId: string, contactId: string): Promise<GHLConversation[]> {
+    logger.debug('Listing conversations', { locationId, contactId });
 
-    const params = new URLSearchParams({ locationId });
+    const params = new URLSearchParams({
+      locationId: locationId,
+      contactId: contactId
+    });
 
     const result = await this.request<{ conversations: GHLConversation[] }>(
       'GET',
-      `/conversations/?${params.toString()}`
+      `/conversations?${params.toString()}`
     );
 
+    logger.info('Conversations API response:', { result, keys: Object.keys(result) });
     return result.conversations;
   }
 
@@ -682,17 +686,20 @@ export class GHLClient {
   /**
    * List media files
    */
-  async listMedia(locationId: string): Promise<GHLMedia[]> {
-    logger.debug('Listing media files', { locationId });
+  async listMedia(locationId: string, type: string): Promise<GHLMedia[]> {
+    logger.debug('Listing media files', { locationId, type });
 
-    const params = new URLSearchParams({ locationId });
+    const params = new URLSearchParams({
+      location_id: locationId,
+      type: type
+    });
 
-    const result = await this.request<{ medias: GHLMedia[] }>(
+    const result = await this.request<{ files: GHLMedia[] }>(
       'GET',
-      `/medias/?${params.toString()}`
+      `/medias/files?${params.toString()}`
     );
 
-    return result.medias;
+    return result.files;
   }
 
   /**

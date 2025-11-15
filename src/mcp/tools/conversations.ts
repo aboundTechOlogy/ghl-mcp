@@ -13,6 +13,7 @@ const GetConversationSchema = z.object({
 
 const ListConversationsSchema = z.object({
   locationId: z.string().describe('The GHL location ID'),
+  contactId: z.string().describe('Contact ID to list conversations for'),
 });
 
 const SendMessageSchema = z.object({
@@ -90,7 +91,7 @@ export class ConversationTools {
   private async listConversations(args: unknown) {
     const parsed = ListConversationsSchema.parse(args);
 
-    const conversations = await this.client.listConversations(parsed.locationId);
+    const conversations = await this.client.listConversations(parsed.locationId, parsed.contactId);
 
     return {
       success: true,

@@ -7,6 +7,7 @@ import { GHLClient } from '../ghl/client.js';
 
 const ListMediaSchema = z.object({
   locationId: z.string().describe('The location ID to list media files for'),
+  type: z.string().describe('Media type to list (e.g., "image", "video", "file")'),
 });
 
 const UploadMediaSchema = z.object({
@@ -46,8 +47,13 @@ export class MediaTools {
   async executeTool(name: string, args: unknown): Promise<unknown> {
     switch (name) {
       case 'ghl_list_media': {
-        const { locationId } = ListMediaSchema.parse(args);
-        return await this.client.listMedia(locationId);
+        const { locationId, type } = ListMediaSchema.parse(args);
+        const medias = await this.client.listMedia(locationId, type);
+        return {
+          success: true,
+          medias,
+          count: medias.length,
+        };
       }
 
       case 'ghl_upload_media': {
