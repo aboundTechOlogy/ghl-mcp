@@ -337,7 +337,7 @@ export class GHLClient {
 
     const result = await this.request<{ opportunities: GHLOpportunity[] }>(
       'GET',
-      `/opportunities/?${params.toString()}`
+      `/opportunities/search?${params.toString()}`
     );
 
     return result.opportunities;
